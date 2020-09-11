@@ -1,0 +1,14 @@
+# global ignore rule
+
+*.zip
+*.weights
+*.pt
+*.pth
+*.pkl
+try.py
+.vscode
+__pycache__
+
+# special ignore rule
+
+
