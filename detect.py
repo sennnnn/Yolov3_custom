@@ -11,8 +11,10 @@ import argparse
 from utils.utils import *
 from modeling.darknet import Darknet
 from modeling.yolov3_tiny import Yolov3_tiny
+from modeling.yolov3 import Yolov3
 
 
+Wider_anchors = [5,7, 9,12, 15,19, 24,31, 39,49, 63,82, 107,142, 196,261, 398,524]
 Wider_tiny_anchors = [6,8, 12,16, 23,30, 46,59, 102,136, 293,387]
 Wider_num_classes = 1
 
@@ -25,6 +27,9 @@ def main(args):
     
     # Manual constructing Yolov3 tiny model implementation
     # model = Yolov3_tiny(3, Wider_num_classes, Wider_tiny_anchors, args.input_size).to(device)
+
+    # Manual constructing Yolov3 model implementation
+    # model = Yolov3(3, Wider_num_classes, Wider_anchors, args.input_size).to(device)
 
     if os.path.splitext(args.ckpt_path)[1] == ".weights":
         # load darknet model weights file.

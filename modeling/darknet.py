@@ -7,7 +7,6 @@ import numpy as np
 
 from utils.utils import *
 
-
 class Upsample(nn.Module):
     '''
         上采样层, 通过 torch.nn.functional 这个库中的插值函数 interpolate 来实现, 对于 init 函数
@@ -207,6 +206,121 @@ class YOLOLayer(nn.Module):
             }
 
             return output, total_loss
+
+
+def _create_conv_block(index, in_channels, out_channels, kernel_size=3, stride=1, padding=0, bias=0, bn=1):
+    block = nn.Sequential()
+
+    block.add_module(
+            f"conv_{index}",
+            nn.Conv2d(
+                in_channels=in_channels,
+                out_channels=out_channels,
+                kernel_size=kernel_size,
+                stride=stride,
+                padding=padding,
+                bias=bias
+            )
+        )
+
+    if bn:
+        block.add_module(
+            f"batch_norm_{index}",
+            nn.BatchNorm2d(
+                num_features=out_channels,
+                momentum=0.9, 
+                eps=1e-5,
+            )
+        )
+    
+    block.add_module(
+        f"leaky_{index}", 
+        nn.LeakyReLU(0.1)
+    )
+
+    return block
+
+
+def _create_maxpool_block(index, kernel_size=2, stride=2):
+        block = nn.Sequential()
+        block.add_module(
+            f"maxpool_{index}",
+            nn.MaxPool2d(
+                kernel_size=kernel_size,
+                stride=stride,
+            )
+        )
+        if kernel_size == 2 and stride == 1:
+            block.add_module(
+                f"fix_pad_{index}",
+                nn.ZeroPad2d(0, 1, 0, 1)
+            )
+
+        return block
+
+
+def _create_upsample_block(index, stride, mode="nearest"):
+    block = nn.Sequential()
+    block.add_module(
+        f"upsample_{index}",
+        Upsample(
+            scale_factor=stride,
+            mode=mode,
+        )
+    )
+
+    return block
+
+
+def _create_tiny_backbone(in_channels):
+    block_list = nn.ModuleList()
+    out_channels_per_block = [16]
+    block_index = 0
+    # (conv + maxpool) * 5
+    for iter_index in range(6):
+        block = _create_conv_block(
+            index=block_index,
+            in_channels=in_channels,
+            out_channels=out_channels_per_block[-1],
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            bias=0,
+            bn=1,
+        )
+        block_index += 1
+        block_list.append(block)
+        if iter_index != 5:
+            block = _create_maxpool_block(
+                index=block_index,
+                kernel_size=2,
+                stride=2,
+            )
+        else:
+            block = _create_maxpool_block(
+                index=block_index,
+                kernel_size=2,
+                stride=2,
+            )
+        block_index += 1
+        block_list.append(block)
+        in_channels = out_channels_per_block[-1]
+        out_channels_per_block.append(out_channels_per_block[-1]*2)
+    
+    block_list.append(
+        _create_conv_block(
+            index=block_index,
+            in_channels=in_channels,
+            out_channels=out_channels_per_block[-1],
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            bias=0,
+            bn=1,
+        )
+    )
+    
+    return block_list, block_index, out_channels_per_block[-1]
 
 
 def Consturct_Model_from_Module_define(block_defs):

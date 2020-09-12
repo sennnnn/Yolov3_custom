@@ -249,3 +249,65 @@ def Rescale_Boxes(bboxes, current_size, original_shape):
     bboxes[:, 3] = ((bboxes[:, 3] - pad_y) / (current_size - 2*pad_y)) * orig_h
     
     return bboxes
+
+
+def Convert_abcd_to_xywh(bbox):
+    '''
+        将 abcd 型标注格式, 转化为 (x_center, y_center, bbox_width, bbox_height) 的标注格式。
+    '''
+    ya, xa = bbox['a']
+    yb, xb = bbox['b']
+    yc, xc = bbox['c']
+    yd, xd = bbox['d']
+
+    xmin = min(xa, xb, xc, xd)
+    xmax = max(xa, xb, xc, xd)
+    ymin = min(ya, yb, yc, yd)
+    ymax = max(ya, yb, yc, yd)
+
+    width = xmax - xmin
+    height = ymax - ymin
+    x_center = (xmin + xmax) / 2
+    y_center = (xmin + xmax) / 2
+
+    return x_center, y_center, width, height
+
+
+def Visulization_abcd(image, bbox):
+    '''
+        Hand dataset 的标注存储方式比较特别, 其对于一个检测目标的标注为四根线, 所以其给出了四个点
+    a, b, c, d 四个点, 将四个点按顺序连接起来就是检测目标所在的区域。
+    
+    输入:
+        image: 待可视化处理的图像。
+        bbox: 按 abcd 标注格式的 bounding box 标签数据。
+    
+    输出:
+        image: 将可视化结果投影在其上的图像。
+    '''
+    ya, xa = bbox['a']
+    yb, xb = bbox['b']
+    yc, xc = bbox['c']
+    yd, xd = bbox['d']
+    
+    x_list = (xa, xb, xc, xd)
+    y_list = (ya, yb, yc, yd)
+
+    x_list = [int(round(x)) for x in x_list]; xa, xb, xc, xd = tuple(x_list)
+    y_list = [int(round(y)) for y in y_list]; ya, yb, yc, yd = tuple(y_list)
+
+    xmin = min(x_list)
+    xmax = max(x_list)
+    ymin = min(y_list)
+    ymax = max(y_list)
+    
+    cv2.putText(image, "abcd format coordinate", (xmin-10, ymin-10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (225, 225, 12), 1)
+    cv2.line(image, (xa, ya), (xb, yb), (225, 225, 12), 2)
+    cv2.line(image, (xb, yb), (xc, yc), (225, 225, 12), 2)
+    cv2.line(image, (xc, yc), (xd, yd), (225, 225, 12), 2)
+    cv2.line(image, (xd, yd), (xa, ya), (225, 225, 12), 2)
+    
+    cv2.putText(image, "xyxy format coordinate", (xmin+10, ymin+10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (12, 225, 225), 1)
+    cv2.rectangle(image, (xmin, ymin), (xmax, ymax), (12, 225, 225), 2)
+
+    return image

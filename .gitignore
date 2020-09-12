@@ -12,4 +12,4 @@ __pycache__
 
 # special ignore rule
 
-dataset
+*dataset
