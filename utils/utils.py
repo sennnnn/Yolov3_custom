@@ -268,7 +268,7 @@ def Convert_abcd_to_xywh(bbox):
     width = xmax - xmin
     height = ymax - ymin
     x_center = (xmin + xmax) / 2
-    y_center = (xmin + xmax) / 2
+    y_center = (ymin + ymax) / 2
 
     return x_center, y_center, width, height
 

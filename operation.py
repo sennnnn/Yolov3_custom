@@ -11,10 +11,12 @@ from utils.utils import Convert_abcd_to_xywh
 # In order to train conveniently,I move all the train and valid picutres in the data folder.
 
 
-def Dataset_txt_Create(dataset_path, txt_path):
+def Dataset_txt_Create(dataset_path, base_path, txt_path):
     with open(txt_path, 'w') as fp:
-        for filename in os.listdir(dataset_path):
-            filepath = os.path.join(dataset_path, filename)
+        # filter out those txt files.
+        file_list = [x for x in os.listdir(dataset_path) if os.path.splitext(x)[1] != ".txt"]
+        for filename in file_list:
+            filepath = os.path.join(base_path, filename)
             fp.write(filepath + '\n')
 
 
@@ -43,11 +45,11 @@ def WIDER_Convert(dataset_path, out_path):
 
     # train.txt make up.
     train_txt_path = os.path.join(out_path, "train.txt")
-    Dataset_txt_Create(train_dataset_path, train_txt_path)
+    Dataset_txt_Create(train_out_path, "face_data/train", train_txt_path)
 
     # valid.txt make up.
     valid_txt_path = os.path.join(out_path, "valid.txt")
-    Dataset_txt_Create(valid_dataset_path, valid_txt_path)
+    Dataset_txt_Create(valid_out_path, "face_data/valid", valid_txt_path)
 
 
 def WIDER_Task_Convert(task_dataset_path, task_out_path, task_split_info_path):
@@ -69,7 +71,8 @@ def WIDER_Task_Convert(task_dataset_path, task_out_path, task_split_info_path):
         # Copy image from source path to destination path.
         img_src_path = os.path.join(task_dataset_path, "images", image_name)
         img_dst_path = os.path.join(task_out_path, f"{index}.jpg")
-        shutil.copy(img_src_path, img_dst_path)
+        if not os.path.exists(img_dst_path):
+            shutil.copy(img_src_path, img_dst_path)
         
         # Parse annotation and get yolo format annotation.
         annotation_dst_path = os.path.join(task_out_path, f"{index}.txt")
@@ -87,7 +90,7 @@ def WIDER_Task_Convert(task_dataset_path, task_out_path, task_split_info_path):
                 bbox_w   = bbox[2] / w
                 bbox_h   = bbox[3] / h
                 # Because there is only one class (face), so the class number is always 0.
-                fp_label.write("0 {} {} {} {}\n".format(x_center, y_center, width, height))
+                fp_label.write("0 {} {} {} {}\n".format(x_center, y_center, bbox_w, bbox_h))
 
         print(f"{image_name} process down...")
 
@@ -113,11 +116,11 @@ def Hand_Convert(dataset_path, out_path):
 
     # train.txt make up.
     train_txt_path = os.path.join(out_path, "train.txt")
-    Dataset_txt_Create(train_dataset_path, train_txt_path)
+    Dataset_txt_Create(train_out_path, "hand_data/train", train_txt_path)
 
     # valid.txt make up.
     valid_txt_path = os.path.join(out_path, "valid.txt")
-    Dataset_txt_Create(valid_dataset_path, valid_txt_path)
+    Dataset_txt_Create(valid_out_path, "hand_data/valid", valid_txt_path)
 
 
 def Hand_Task_Convert(task_dataset_path, task_out_path):
@@ -148,7 +151,8 @@ def Hand_Task_Convert(task_dataset_path, task_out_path):
         
         # image process.
         image_dst_path = os.path.join(task_out_path, f"{index}.jpg")
-        shutil.copy(image_src_path, image_dst_path)
+        if not os.path.exists(image_dst_path):
+            shutil.copy(image_src_path, image_dst_path)
         
         # annotation process.
         annotation_dst_path = os.path.join(task_out_path, f"{index}.txt")
@@ -172,10 +176,10 @@ def Hand_Task_Convert(task_dataset_path, task_out_path):
 
 
 def main(args):
-    if args.dataset_name == "FACE":
-        WIDER_Convert(args.WIDER_path, args.out_path)
-    elif args.dataset_name == "Hand":
-        Hand_Convert(args.Hand_path, args.out_path)
+    if args.dataset_name == "face":
+        WIDER_Convert(args.src_path, args.out_path)
+    elif args.dataset_name == "hand":
+        Hand_Convert(args.src_path, args.out_path)
     else:
         assert False, "Dataset name can't be {}.".format(args.dataset_name)
 
@@ -183,8 +187,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--WIDER_path", type=str, default=None, help="The path of WIDER FACE dataset root path.")
-    parser.add_argument("--Hand_path", type=str, default=None, help="The path of Hand dataset root path.")
+    parser.add_argument("--src_path", type=str, default=None, help="The path of dataset root path.")
     parser.add_argument("--out_path", type=str, default=None, help="The output path of this constructed dataset.")
 
     parser.add_argument("--dataset_name", type=str, default=None, help="The name of the dataset which is needed to process.")
