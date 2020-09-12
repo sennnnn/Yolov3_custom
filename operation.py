@@ -1,62 +1,119 @@
 import os
-import cv2
+import sys
+import shutil
 import argparse
-import numpy as np
-import matplotlib.pyplot as plt
+
+from PIL import Image
+
 
 # At first,put your rootpath of the WIDER_FACE dataset.
 # In order to train conveniently,I move all the train and valid picutres in the data folder.
 
-txt_path = 'wider_face_split/'
 
-def move(target, dataset_path):
-    index = 0
-    label_txt_name = 'wider_face_{}_bbx_gt.txt'.format(target)
-    temp = open(os.path.join(dataset_path,txt_path,label_txt_name),'r')
-    if not os.path.exists('data/{}'.format(target)):
-        os.makedirs('data/{}'.format(target))
-    all_txt = open('data/'+target+'.txt','w')
-    while(True):
-        filename = temp.readline().strip('\n')
-        print(index,filename)
-        if(filename==""):
-            break
-        all_txt.write('data/{}'.format(target) + str(index) + '.jpg\n')
-        n_box = int(temp.readline())
-        n_box = n_box if(n_box != 0) else 1
-        images = 'WIDER_{}/images'.format(target)
-        image = cv2.imread(os.path.join(dataset_path,images,filename))
-        w,h,_ = image.shape
-        one_ = open('data/{}/{}.txt'.format(target,index),'w')
-        for i in range(n_box):
-            box = temp.readline().strip().split(' ')
-            box = [int(x) for x in box]
-            leftup = (box[0],box[1])
-            rightdown = (box[0]+box[2],box[1]+box[3])
-            center_x = box[0]+int(box[2]/2.)
-            center_y = box[1]+int(box[3]/2.)
-            center_x_ = center_x/h
-            center_y_ = center_y/w
-            width = box[2]/h
-            height = box[3]/w
-            one_.write('0 {} {} {} {}\n'.format(center_x_,center_y_,width,height))
-        cv2.imwrite('data/{}/{}.jpg'.format(target,index),image)
-        index += 1
+def Dataset_txt_Create(dataset_path, txt_path):
+    with open(txt_path, 'w') as fp:
+        for filename in os.listdir(dataset_path):
+            filepath = os.path.join(dataset_path, filename)
+            fp.write(filepath + '\n')
+
+
+def WIDER_Convert(dataset_path, out_path):
+    # Constructing train dataset and valid dataset at the same time.
+    task_list = ["train", "valid"]
+
+    train_dataset_path = os.path.join(dataset_path, "WIDER_train")
+    valid_dataset_path = os.path.join(dataset_path, "WIDER_valid")
+
+    train_out_path = os.path.join(out_path, "train")
+    valid_out_path = os.path.join(out_path, "valid")
+
+    task_split_info_folder = os.path.join(dataset_path, "wider_face_split")
+    train_split_info_path = os.path.join(task_split_info_folder, "wider_face_train_bbx_gt.txt")
+    valid_split_info_path = os.path.join(task_split_info_folder, "wider_face_valid_bbx_gt.txt")
+
+    # train dataset make up.
+    print("train dataset make up...")
+    WIDER_Task_Convert(train_dataset_path, train_out_path, train_split_info_path)
+    print("train dataset construct down...")
+
+    # valid dataset make up.
+    print("train dataset make up...")
+    WIDER_Task_Convert(valid_dataset_path, valid_out_path, valid_split_info_path)
+    print("train dataset construct down...")
+
+    # train.txt make up.
+    train_txt_path = os.path.join(out_path, "train.txt")
+    Dataset_txt_Create(train_dataset_path, train_txt_path)
+
+    # valid.txt make up.
+    valid_txt_path = os.path.join(out_path, "valid.txt")
+    Dataset_txt_Create(valid_dataset_path, valid_txt_path)
+
+
+def WIDER_Task_Convert(task_dataset_path, task_out_path, task_split_info_path):
     
+    if not os.path.exists(task_out_path):
+        os.makedirs(task_out_path, 0o777)
+    
+    fp = open(task_split_info_path, "r")
+
+    index = 0
+    while(True):
+        image_name = fp.readline().strip()
+        if(image_name==""):
+            break
+        index += 1
+
+        print(f"{image_name} processing...")
+
+        # Copy image from source path to destination path.
+        img_dst_path = os.path.join(task_out_path, f"{index}.jpg")
+        img_src_path = os.path.join(task_dataset_path, "images", image_name)
+        shutil.copy(img_src_path, img_dst_path)
+        
+        # Parse annotation and get yolo format annotation.
+        annotation_dst_path = os.path.join(task_out_path, f"{index}.txt")
+        with open(annotation_dst_path, 'w') as fp_label:
+            # Get the number of detection targets or the number of ground truth bounding boxes.
+            num_bboxes = int(fp.readline())
+            num_bboxes = num_bboxes if num_bboxes != 0 else 1
+            w, h = Image.open(img_src_path).size
+            for bbox_i in range(num_bboxes):
+                bbox = fp.readline().strip().split(' ')
+                bbox = [int(x) for x in bbox]
+                # Convert to [x_center, y_center, width, height] and Normalization.
+                x_center = (bbox[0] + bbox[2] / 2) / w
+                y_center = (bbox[1] + bbox[3] / 2) / h
+                width    = bbox[2] / w
+                height   = bbox[3] / h
+                # Because there is only one class (face), so the class number is always 0.
+                fp_label.write("0 {} {} {} {}\n".format(x_center, y_center, width, height))
+
+        print(f"{image_name} process down...")
+
+
+def Hand_Convert(dataset_path, out_path):
+    pass
+
+
 def main(args):
-    if(args.dataset != ''):
-        for name in ['train','valid']:
-            move(name,args.dataset)
+    if args.dataset_name == "FACE":
+        WIDER_Convert(args.WIDER_path, args.out_path)
+    elif args.dataset_name == "Hand":
+        Hand_Convert(arg.Hand_path, args.out_path)
     else:
-        print('please input dataset root path')
+        assert False, "Dataset name can't be {}.".format(args.dataset_name)
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='''
-                                    --dataset Input your WIDER FACE dataset path.''')
+    parser = argparse.ArgumentParser()
 
-    parser.add_argument('--dataset',default='',help='Path for WIDER FACE dataset.')
+    parser.add_argument("--WIDER_path", type=str, default=None, help="The path of WIDER FACE dataset root path.")
+    parser.add_argument("--Hand_path", type=str, default=None, help="The path of Hand dataset root path.")
+    parser.add_argument("--out_path", type=str, default=None, help="The output path of this constructed dataset.")
+
+    parser.add_argument("--dataset_name", type=str, default=None, help="The name of the dataset which is needed to process.")
     
     args = parser.parse_args()
+    
     main(args)
-
-
