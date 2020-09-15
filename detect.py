@@ -69,7 +69,7 @@ def main(args):
         cv2.waitKey(0)
 
         if args.out_filename is not None:
-            cv2.imwrite(img, args.out_filename)
+            cv2.imwrite(args.out_filename, img)
 
     elif args.video is not None:
         video_name = Convert_String_to_Int(args.video)
@@ -141,13 +141,13 @@ if __name__ == "__main__":
     
     parser.add_argument("--cuda", type=bool, default=False, help="Deciding if inferencing with gpu.")
     
-    parser.add_argument("--conf_thres", type=float, default=0.8, help="The threshold to filter out bounding boxes whose confidence scores is below threshold.")
+    parser.add_argument("--conf_thres", type=float, default=0.25, help="The threshold to filter out bounding boxes whose confidence scores is below threshold.")
     parser.add_argument("--nms_iou_thres", type=float, default=0.4, help="The IOU threshold to filter out rebundant bounding boxes.")
     parser.add_argument("--input_size", type=int, default=416, help="The rescaling tensor size when inputting model.")
 
-    parser.add_argument("--ckpt_path", type=str, default="config/yolov3_wider.pth", help="The path of model parameters file.")
+    parser.add_argument("--ckpt_path", type=str, default="config/yolov3_hand_tiny.weights", help="The path of model parameters file.")
     parser.add_argument("--class_path", type=str, default="config/wider.names", help="The path of detection classes file.")
-    parser.add_argument("--model_config_path", type=str, default="config/yolov3_wider.cfg", help="The path of model definition file.")
+    parser.add_argument("--model_config_path", type=str, default="config/yolov3_hand_tiny.cfg", help="The path of model definition file.")
     
     parser.add_argument("--video", type=str, default="0", help="The path of video file needed to process or camera index.")
     parser.add_argument("--image", type=str, default=None, help="The path of image file needed to process.")

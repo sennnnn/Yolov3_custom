@@ -1,4 +1,9 @@
-# 说明
+# Usage
 
-python detect.py # 默认不使用 GPU  
-python detect.py --if_gpu True # 使用 GPU
+```
+python detect.py # CPU mode  
+python detect.py --cuda True # GPU mode  
+```
+
+# Metric
+

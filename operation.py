@@ -180,6 +180,8 @@ def main(args):
         WIDER_Convert(args.src_path, args.out_path)
     elif args.dataset_name == "hand":
         Hand_Convert(args.src_path, args.out_path)
+    elif args.dataset_name == "hand_pose":
+        pass
     else:
         assert False, "Dataset name can't be {}.".format(args.dataset_name)
 
