@@ -1,6 +1,7 @@
 import os
 import sys
 import cv2
+import time
 import torch
 import torch.nn as nn
 
@@ -52,7 +53,7 @@ def main(args):
 
         if boxes is not None:
             for x1, y1, x2, y2  in boxes:
-                cv2.rectangle(img, (x1, y1), (x2, y2), (255, 255, 2), 2)
+                cv2.rectangle(img, (x1, y1), (x2, y2), (255, 255, 2), 4)
                 x_center = (x1 + x2)/2
                 if boxes.shape[0] == 1:
                     show_string = None
@@ -77,6 +78,7 @@ def main(args):
         cap = cv2.VideoCapture(video_name)
     
         while(1):
+            start = time.time()
             ret, frame = cap.read()
             h, w = frame.shape[:2]
 
@@ -89,16 +91,18 @@ def main(args):
                     if boxes.shape[0] == 1:
                         show_string = None
                         if x_center <= h/3:
-                            show_string = "right"
-                        elif x_center >= 2*h/3:
                             show_string = "left"
+                        elif x_center >= 2*h/3:
+                            show_string = "right"
                         else:
                             show_string = "middle"
                         print(show_string)
-                        cv2.putText(frame, show_string, (40, 40), cv2.FONT_HERSHEY_SCRIPT_COMPLEX, 1., (255, 255, 2), 2)
+                        # cv2.putText(frame, show_string, (40, 40), cv2.FONT_HERSHEY_SIMPLEX, 1., (255, 255, 2), 2)
 
+            end = time.time()
+            cv2.putText(frame, f"fps:{1/(end-start):.2f}", (200, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 2), 2)
             cv2.imshow("show", frame)
-            button = cv2.waitKey(10)
+            button = cv2.waitKey(1)
             
             # ord function can get char related ASCii code.
             # chr function is the reverse function of ord function.
@@ -139,15 +143,15 @@ def detect(model, img, img_shape, input_size, cuda=True, conf_thres=0.5, nms_iou
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     
-    parser.add_argument("--cuda", type=bool, default=False, help="Deciding if inferencing with gpu.")
-    
-    parser.add_argument("--conf_thres", type=float, default=0.25, help="The threshold to filter out bounding boxes whose confidence scores is below threshold.")
-    parser.add_argument("--nms_iou_thres", type=float, default=0.4, help="The IOU threshold to filter out rebundant bounding boxes.")
-    parser.add_argument("--input_size", type=int, default=416, help="The rescaling tensor size when inputting model.")
+    parser.add_argument("model_config_path", type=str, help="The path of model definition file.")
+    parser.add_argument("class_path", type=str, help="The path of detection classes file.")
+    parser.add_argument("ckpt_path", type=str, help="The path of model parameters file.")
 
-    parser.add_argument("--ckpt_path", type=str, default="config/yolov3_hand_tiny.weights", help="The path of model parameters file.")
-    parser.add_argument("--class_path", type=str, default="config/wider.names", help="The path of detection classes file.")
-    parser.add_argument("--model_config_path", type=str, default="config/yolov3_hand_tiny.cfg", help="The path of model definition file.")
+    parser.add_argument("--cuda", action='store_true', help="Deciding if inferencing with gpu.")
+    
+    parser.add_argument("--conf_thres", type=float, default=0.4, help="The threshold to filter out bounding boxes whose confidence scores is below threshold.")
+    parser.add_argument("--nms_iou_thres", type=float, default=0.5, help="The IOU threshold to filter out rebundant bounding boxes.")
+    parser.add_argument("--input_size", type=int, default=416, help="The rescaling tensor size when inputting model.")
     
     parser.add_argument("--video", type=str, default="0", help="The path of video file needed to process or camera index.")
     parser.add_argument("--image", type=str, default=None, help="The path of image file needed to process.")
