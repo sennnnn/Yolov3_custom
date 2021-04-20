@@ -4,9 +4,9 @@
 
 | model | dataset | download |
 | :- | :- | :- |
-| Yolov3 | WIDER FACE |[BaiduNetDisk(58kn)](https://pan.baidu.com/s/1q0zHTM_IajQ-1wW5hhFIuw) |
+| Yolov3 | WIDER FACE | [BaiduNetDisk(cnl4)](https://pan.baidu.com/s/1yCAgeXKrXq4PbITa1h1yJw) |
 | Yolov3 | TV-hand & COCO-hand | [BaiduNetDisk(kvzt)](https://pan.baidu.com/s/1fJVdm6CvqCkNBBkAOdpO8w) |
-| Yolov3-tiny | WIDER FACE | [BaiduNetDisk(cnl4)](https://pan.baidu.com/s/1yCAgeXKrXq4PbITa1h1yJw) |
+| Yolov3-tiny | WIDER FACE | [BaiduNetDisk(58kn)](https://pan.baidu.com/s/1q0zHTM_IajQ-1wW5hhFIuw) |
 | Yolov3-tiny | TV-hand & COCO-hand | [BaiduNetDisk(6guf)](https://pan.baidu.com/s/1RLpchgKZ9wo6j5_6K0yOSg) |
 
 2. You'd better put those downloaded weights file into config/.
